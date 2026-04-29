@@ -1,3 +1,6 @@
+import dns from 'node:dns';
+dns.setServers(['8.8.8.8', '8.8.4.4']); // Forces use of Google DNS
+    
 import mongoose from "mongoose";
 import { DB_NAME } from "../constants.js";
 
