@@ -8,13 +8,13 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 const generateAccessTokenAndRefereshTokens = async(userId) => {
   try {
     const user = await User.findById(userId)
-   const accesstoken = user.generateAccessToken
-   const refereshtoken = user.generateRefreshToken 
+   const accessToken = user.generateAccessToken()
+   const refreshToken = user.generateRefreshToken ()
    
-   user.refereshtoken = refereshtoken
+   user.refreshToken = refreshToken
    await user.save({ validateBeforeSave: false })
 
-   return {accesstoken, refereshtoken}
+   return {accessToken, refreshToken}
 
 
   } catch (error) {
@@ -49,7 +49,7 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new ApiError(409, "User With email or udrtname already exists");
   }
    
-  const avatarLocalPath = req.files?.avatar[0]?.path;
+    const avatarLocalPath = req.files?.avatar?.[0]?.path;
   console.log("FILES:", req.files);
  
   // const coverImageLocalPath = req.files?.coverImage[0]?.path;
@@ -94,7 +94,7 @@ if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.len
     .json(new ApiResponse(200, createdUser, "user register successfully"));
 });
 
-const loingUser = asyncHandler( async (req, res) => {
+const loginUser = asyncHandler( async (req, res) => {
   // req body -> data
   // username or email
   // find the user
@@ -104,7 +104,7 @@ const loingUser = asyncHandler( async (req, res) => {
 
   const {email, username, password} = req.body
 
-  if (!email || !username){
+  if (!email && !username){
     throw new ApiError(400, "username or email is required")
   }
 
@@ -114,7 +114,7 @@ const loingUser = asyncHandler( async (req, res) => {
 
   })
 
-  if (!username) {
+  if (!user) {
     throw new ApiError(404, "User does not exist")
   }
 
@@ -124,9 +124,9 @@ const loingUser = asyncHandler( async (req, res) => {
     throw new ApiError(401, "Invalid user credentials")
   }
 
-  const {accesstoken, refereshtoken} = await generateAccessTokenAndRefereshTokens(user._id )
+  const {accessToken, refreshToken} = await generateAccessTokenAndRefereshTokens(user._id)
 
-  const loggedInUser = await user.findById(user._id).select("-password -refereshtoken")
+  const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
 
   const options = {
     httpOnly: true,
@@ -135,17 +135,15 @@ const loingUser = asyncHandler( async (req, res) => {
 
   return res
   .status(200)
-  .coockie("accessToken", accesstoken, options)
-  .coockie("refreshToken", refereshtoken, options)
-  .json(
-      new ApiResponse(
-          200,
-            {
-              user: loggedInUser, accesstoken, refereshtoken
-            },
-            "user logedIn Successfully"
-      )
-  )
+  .cookie("accessToken", accessToken, options)
+.cookie("refreshToken", refreshToken, options)
+.json(
+    new ApiResponse(
+        200,
+        { user: loggedInUser, accessToken, refreshToken },
+        "User logged in successfully"
+    )
+)
   
 
 })
@@ -177,6 +175,8 @@ const logoutUser = asyncHandler(async(req, res) => {
 
 export { 
   registerUser,
-  loingUser, 
+  loginUser, 
   logoutUser
  };
+
+ 
