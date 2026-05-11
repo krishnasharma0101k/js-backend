@@ -5,7 +5,7 @@ const likeSchema = new Schema({
         type: Schema.Types.ObjectId,
         ref: "Video"
     },
-    Comment: {
+    comment: {
         type: Schema.Types.ObjectId,
         ref: "Comment"
     },
@@ -18,5 +18,10 @@ const likeSchema = new Schema({
         ref: "User"
     },
 }, {timestamps: true}) 
+
+likeSchema.index({ video: 1, likedby: 1 }, { unique: true, sparse: true });
+likeSchema.index({ comment: 1, likedby: 1 }, { unique: true, sparse: true });
+likeSchema.index({ tweet: 1, likedby: 1 }, { unique: true, sparse: true });
+
 
 export const Like = mongoose.model("Like", likeSchema)
